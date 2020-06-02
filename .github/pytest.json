@@ -9,7 +9,7 @@
           "line": 2
         },
         {
-          "regexp": "^\\s*raise\\s(.*)\\(\\'(.*)\\'\\)$",
+          "regex": "^(AssertionError:\\s.*)$",
           "message": 2
         }
       ]
