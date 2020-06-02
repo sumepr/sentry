@@ -25,7 +25,7 @@ type RepositoryStoreInterface = {
 
 const RepositoryStoreConfig: Reflux.StoreDefinition & RepositoryStoreInterface = {
   orgSlug: undefined,
-  lastUpdated: Date.now(),
+  lastUpdated: Date.now(), // withRepositories will refetch if data is older than 30s
   repos: undefined,
   reposLoading: undefined,
   reposError: undefined,

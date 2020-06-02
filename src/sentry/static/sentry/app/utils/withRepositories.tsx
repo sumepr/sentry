@@ -46,7 +46,12 @@ const withRepositories = <P extends InjectedProps>(
       const {api, orgSlug} = this.props as P & DependentProps;
       const repoData = RepositoryStore.get(orgSlug);
 
-      if (!repoData.repos && !repoData.reposLoading) {
+      // Case 1: Data has not loaded
+      // Case 2: Data is older than 30s
+      if (
+        (!repoData.repos && !repoData.reposLoading) ||
+        Date.now() - RepositoryStore.lastUpdated > 30000
+      ) {
         // HACK(leedongwei): Actions fired by the ActionCreators are queued to
         // the back of the event loop, allowing another getRepo for the same
         // repo to be fired before the loading state is updated in store.
