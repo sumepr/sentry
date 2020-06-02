@@ -10,7 +10,7 @@
         },
         {
           "regex": "^(AssertionError:\\s.*)$",
-          "message": 2
+          "message": 1
         }
       ]
     }
