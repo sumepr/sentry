@@ -22,6 +22,7 @@ jobs:
       needs: [percynonce]
       runs-on: ubuntu-16.04
       strategy:
+        fail-fast: true
         matrix:
           instance: [0, 1, 2]
 
@@ -115,6 +116,13 @@ jobs:
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       steps:
+        # Setup custom pytest matcher, see https://github.com/actions/setup-node/issues/97
+        - name: Add pytest log matcher
+          if: always()
+          run: |
+            echo "::remove-matcher owner=pytest::"
+            echo "::add-matcher::.github/pytest.json"
+
         # Checkout codebase
         - uses: actions/checkout@v2
 
