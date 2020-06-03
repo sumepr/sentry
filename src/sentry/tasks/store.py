@@ -17,7 +17,6 @@ from sentry.relay.config import get_project_config
 from sentry.datascrubbing import scrub_data
 from sentry.constants import DEFAULT_STORE_NORMALIZER_ARGS
 from sentry.attachments import attachment_cache
-from sentry.cache import default_cache
 from sentry.tasks.base import instrumented_task
 from sentry.utils import metrics
 from sentry.utils.safe import safe_execute
@@ -26,6 +25,7 @@ from sentry.utils.canonical import CanonicalKeyDict, CANONICAL_TYPES
 from sentry.utils.dates import to_datetime
 from sentry.utils.sdk import set_current_project
 from sentry.models import ProjectOption, Activity, Project, Organization
+from sentry.eventstore.tempstore import event_tempstore
 
 error_logger = logging.getLogger("sentry.errors.events")
 info_logger = logging.getLogger("sentry.store")
@@ -110,7 +110,8 @@ def _do_preprocess_event(cache_key, data, start_time, event_id, process_task, pr
     from sentry.lang.native.processing import should_process_with_symbolicator
 
     if cache_key and data is None:
-        data = default_cache.get(cache_key)
+        # data = default_cache.get(cache_key)
+        data = event_tempstore.get(cache_key)
 
     if data is None:
         metrics.incr("events.failed", tags={"reason": "cache", "stage": "pre"}, skip_internal=False)
@@ -192,7 +193,8 @@ def _do_symbolicate_event(cache_key, start_time, event_id, symbolicate_task, dat
     from sentry.lang.native.processing import get_symbolication_function
 
     if data is None:
-        data = default_cache.get(cache_key)
+        data = event_tempstore.get(cache_key)
+        # data = default_cache.get(cache_key)
 
     if data is None:
         metrics.incr(
@@ -269,7 +271,8 @@ def _do_symbolicate_event(cache_key, start_time, event_id, symbolicate_task, dat
         data = dict(data.items())
 
     if has_changed:
-        default_cache.set(cache_key, data, 3600)
+        cache_key = event_tempstore.store(data)
+        # default_cache.set(cache_key, data, 3600)
 
     process_task = process_event_from_reprocessing if from_reprocessing else process_event
     _do_process_event(
@@ -396,7 +399,7 @@ def _do_process_event(
     from sentry.plugins.base import plugins
 
     if data is None:
-        data = default_cache.get(cache_key)
+        data = event_tempstore.get(cache_key)
 
     if data is None:
         metrics.incr(
@@ -536,7 +539,8 @@ def _do_process_event(
             _do_preprocess_event(cache_key, data, start_time, event_id, process_task, project)
             return
 
-        default_cache.set(cache_key, data, 3600)
+        # default_cache.set(cache_key, data, 3600)
+        cache_key = event_tempstore.store(data)
 
     submit_save_event(project, cache_key, event_id, start_time, data)
 
@@ -678,7 +682,8 @@ def create_failed_event(
     # from the last processing step because we do not want any
     # modifications to take place.
     delete_raw_event(project_id, event_id)
-    data = default_cache.get(cache_key)
+    # data = default_cache.get(cache_key)
+    data = event_tempstore.get(cache_key)
     if data is None:
         metrics.incr("events.failed", tags={"reason": "cache", "stage": "raw"}, skip_internal=False)
         error_logger.error("process.failed_raw.empty", extra={"cache_key": cache_key})
@@ -703,7 +708,8 @@ def create_failed_event(
             data=issue["data"],
         )
 
-    default_cache.delete(cache_key)
+    # default_cache.delete(cache_key)
+    event_tempstore.delete_by_key(cache_key)
 
     return True
 
@@ -723,7 +729,8 @@ def _do_save_event(
 
     if cache_key and data is None:
         with metrics.timer("tasks.store.do_save_event.get_cache") as metric_tags:
-            data = default_cache.get(cache_key)
+            # data = default_cache.get(cache_key)
+            data = event_tempstore.get(cache_key)
             if data is not None:
                 metric_tags["event_type"] = event_type = data.get("type") or "none"
 
@@ -778,7 +785,8 @@ def _do_save_event(
         finally:
             if cache_key:
                 with metrics.timer("tasks.store.do_save_event.delete_cache"):
-                    default_cache.delete(cache_key)
+                    event_tempstore.delete_by_key(cache_key)
+                    # default_cache.delete(cache_key)
 
                 with metrics.timer("tasks.store.do_save_event.delete_attachment_cache"):
                     # For the unlikely case that we did not manage to persist the

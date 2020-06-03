@@ -1064,6 +1064,10 @@ SENTRY_CACHE_OPTIONS = {}
 SENTRY_ATTACHMENTS = "sentry.attachments.default.DefaultAttachmentCache"
 SENTRY_ATTACHMENTS_OPTIONS = {}
 
+# Eventstore blob cache backend
+SENTRY_EVENT_TEMPSTORE = "sentry.eventstore.tempstore.default.DefaultEventTempStore"
+SENTRY_EVENT_TEMPSTORE_OPTIONS = {}
+
 # The internal Django cache is still used in many places
 # TODO(dcramer): convert uses over to Sentry's backend
 CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
