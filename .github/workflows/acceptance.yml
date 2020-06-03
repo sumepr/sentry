@@ -116,15 +116,15 @@ jobs:
             KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
       steps:
+        # Checkout codebase
+        - uses: actions/checkout@v2
+
         # Setup custom pytest matcher, see https://github.com/actions/setup-node/issues/97
         - name: Add pytest log matcher
           if: always()
           run: |
             echo "::remove-matcher owner=pytest::"
             echo "::add-matcher::.github/pytest.json"
-
-        # Checkout codebase
-        - uses: actions/checkout@v2
 
         # Install node
         - uses: volta-cli/action@v1
