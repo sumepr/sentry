@@ -70,10 +70,7 @@ DISCOVER_COLUMN_MAP = {
 }
 
 
-DATASETS = {
-    Dataset.Events: SENTRY_SNUBA_MAP,
-    Dataset.Discover: DISCOVER_COLUMN_MAP,
-}
+DATASETS = {Dataset.Events: SENTRY_SNUBA_MAP, Dataset.Discover: DISCOVER_COLUMN_MAP}
 
 # Store the internal field names to save work later on.
 # Add `group_id` to the events dataset list as we don't want to publically
